@@ -29,7 +29,7 @@ def get_all_dosages():
         for line in gzip.open(os.path.join(DOSAGE_DIR, chrfile)):
             arr = line.strip().split()
             rsid = arr[1]
-            refallele = arr[3]
+            refallele = arr[4]
             dosage_row = np.array(map(float, arr[6:]))
             yield rsid, refallele, dosage_row
 
