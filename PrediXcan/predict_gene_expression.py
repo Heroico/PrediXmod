@@ -12,6 +12,7 @@ import sys
 parser = argparse.ArgumentParser()
 parser.add_argument('genelist', help="Text file with chromosome, gene pairs.")
 parser.add_argument('dosages', help="Path to a directory of gzipped dosage files.")
+parser.add_argument('dosages_prefix', help="Prefix of filenames of gzipped dosage files.")
 parser.add_argument('weights', help="SQLite database with rsid weights.")
 parser.add_argument('output', help="Path to the output file.")
 args = parser.parse_args()
@@ -19,12 +20,13 @@ args = parser.parse_args()
  
 GENE_LIST = args.genelist
 DOSAGE_DIR = args.dosages
+DOSAGE_PREFIX = args.dosages_prefix
 BETA_FILE = args.weights
 OUTPUT_FILE = args.output
 
 
 def get_all_dosages():
-    for chrfile in sorted(os.listdir(DOSAGE_DIR)):
+    for chrfile in [x for x in sorted(os.listdir(DOSAGE_DIR)) if x.startswith(DOSAGE_PREFIX)]:
         print datetime.datetime.now(), "Processing %s"%chrfile
         for line in gzip.open(os.path.join(DOSAGE_DIR, chrfile)):
             arr = line.strip().split()
