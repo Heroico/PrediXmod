@@ -44,9 +44,9 @@ class DB:
 
         self.connection = sqlite3.connect(db_filename)
         
-        self("CREATE TABLE weights (raid TEXT, gene TEXT, weight DOUBLE, eff_allele CHARACTER, pval DOUBLE, N INTEGER, cis INTEGER)")
-        self("CREATE INDEX weights_raid ON weights (raid)")
-        self("CREATE INDEX weights_raid_gene ON weights (raid, gene)")
+        self("CREATE TABLE weights (rsid TEXT, gene TEXT, weight DOUBLE, eff_allele CHARACTER, pval DOUBLE, N INTEGER, cis INTEGER)")
+        self("CREATE INDEX weights_rsid ON weights (rsid)")
+        self("CREATE INDEX weights_rsid_gene ON weights (rsid, gene)")
 
 
     def __call__(self, sql, args=None):
@@ -60,7 +60,8 @@ class DB:
         self.connection.commit()            
 
     def insert_row(self, row):
-        self("INSERT INTO weights VALUES(?, ?, ?, ?, NULL, NULL, NULL)", (row['rsid'], row['gene'], row['beta'], row['ref']))
+        self("INSERT INTO weights VALUES(?, ?, ?, ?, NULL, NULL, NULL)", (row['rsid'], row['gene'], row['beta'], row['alt']))
+        "alt allele is the dosage/effect allele in GTEx data"
         
 
 class MetaDB:

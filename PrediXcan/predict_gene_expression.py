@@ -49,7 +49,7 @@ class GetApplicationsOf:
                 yield ret
 
     def __call__(self, rsid):
-        for tup in self.query("SELECT gene, weight, eff_allele FROM weights WHERE raid=?", (rsid,)):
+        for tup in self.query("SELECT gene, weight, eff_allele FROM weights WHERE rsid=?", (rsid,)):
             yield tup
 get_applications_of = GetApplicationsOf()
 
