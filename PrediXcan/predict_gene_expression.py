@@ -69,7 +69,8 @@ class TranscriptionMatrix:
     def save(self):
         with open(OUTPUT_FILE, 'w+') as outfile:
             outfile.write('\t'.join(self.gene_list) + '\n') # Nb. this lists the names of rows, not of columns
-            outfile.write(str(self.D))
+            for col in range(0, self.D.shape[1]):
+                outfile.write('\t'.join(map(str, self.D[:,col]))+'\n')
 
 transcription_matrix = TranscriptionMatrix()
 for rsid, allele, dosage_row in get_all_dosages():
