@@ -10,11 +10,11 @@ import sqlite3
 import sys
 
 parser = argparse.ArgumentParser()
-parser.add_argument('genelist', help="Text file with chromosome, gene pairs.")
-parser.add_argument('dosages', help="Path to a directory of gzipped dosage files.")
-parser.add_argument('dosages_prefix', help="Prefix of filenames of gzipped dosage files.")
-parser.add_argument('weights', help="SQLite database with rsid weights.")
-parser.add_argument('output', help="Path to the output file.")
+parser.add_argument('--genelist', action="store", dest="genelist", default=None, help="Text file with chromosome, gene pairs.")
+parser.add_argument('--dosages', action="store", dest="dosages", default="data/dosages", help="Path to a directory of gzipped dosage files.")
+parser.add_argument('--dosages_prefix', dest="dosages_prefix", default="chr", action="store", help="Prefix of filenames of gzipped dosage files.")
+parser.add_argument('--weights', action="store", dest="weights",default="data/weights.db",  help="SQLite database with rsid weights.")
+parser.add_argument('--output', action="store", dest="output", default="output.txt", help="Path to the output file.")
 args = parser.parse_args()
 
  
@@ -35,7 +35,7 @@ def get_all_dosages():
             dosage_row = np.array(map(float, arr[6:]))
             yield rsid, refallele, dosage_row
 
-class GetApplicationsOf:
+class WeightsDB:
     def __init__(self):
         self.conn = sqlite3.connect(BETA_FILE)
 
@@ -48,8 +48,12 @@ class GetApplicationsOf:
             for ret in c.execute(sql):
                 yield ret
 
+class GetApplicationsOf:
+    def __init__(self):
+        self.db = WeightsDB()
+
     def __call__(self, rsid):
-        for tup in self.query("SELECT gene, weight, eff_allele FROM weights WHERE rsid=?", (rsid,)):
+        for tup in self.db.query("SELECT gene, weight, eff_allele FROM weights WHERE rsid=?", (rsid,)):
             yield tup
 get_applications_of = GetApplicationsOf()
 
@@ -57,9 +61,15 @@ class TranscriptionMatrix:
     def __init__(self):
         self.D = None
 
+    def get_gene_list(self):
+        if GENE_LIST:
+            return list(sorted([line.strip().split()[-1] for line in open(GENE_LIST)]))
+        else:
+            return [tup[0] for tup in WeightsDB().query("SELECT DISTINCT gene FROM weights ORDER BY gene")]
+
     def update(self, gene, weight, ref_allele, allele, dosage_row):
         if self.D is None:
-            self.gene_list = list(sorted([line.strip().split()[-1] for line in open(GENE_LIST)]))
+            self.gene_list = self.get_gene_list()  
             self.gene_index = { gene:k for (k, gene) in enumerate(self.gene_list) }
             self.D = np.zeros((len(self.gene_list), len(dosage_row))) # Genes x Cases
         if gene in self.gene_index:            
