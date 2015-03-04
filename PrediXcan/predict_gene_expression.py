@@ -13,7 +13,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--genelist', action="store", dest="genelist", default=None, help="Text file with chromosome, gene pairs.")
 parser.add_argument('--dosages', action="store", dest="dosages", default="data/dosages", help="Path to a directory of gzipped dosage files.")
 parser.add_argument('--dosages_prefix', dest="dosages_prefix", default="chr", action="store", help="Prefix of filenames of gzipped dosage files.")
+parser.add_argument('--dosages_buffer', dest="dosages_buffer", default=None, action="store", help="Buffer size in GB for each dosage file (default: read line by line)")
 parser.add_argument('--weights', action="store", dest="weights",default="data/weights.db",  help="SQLite database with rsid weights.")
+parser.add_argument('--weights_on_disk', action="store_true", dest="weights_on_disk",  help="Don't load weights db to memory.")
 parser.add_argument('--output', action="store", dest="output", default="output.txt", help="Path to the output file.")
 args = parser.parse_args()
 
@@ -21,14 +23,42 @@ args = parser.parse_args()
 GENE_LIST = args.genelist
 DOSAGE_DIR = args.dosages
 DOSAGE_PREFIX = args.dosages_prefix
+DOSAGE_BUFFER = int(args.dosages_buffer) if args.dosages_buffer else None
 BETA_FILE = args.weights
+PRELOAD_WEIGHTS = not args.weights_on_disk
 OUTPUT_FILE = args.output
 
+
+def buffered_file(file):
+    if not DOSAGE_BUFFER:
+        for line in file:
+            yield line
+    else:
+        buf = ''
+        while True:
+            buf = buf + file.read(DOSAGE_BUFFER*(1024**3))
+            if not buf:
+                raise StopIteration
+            last_eol = 0
+            while True:
+                next_eol = buf.find('\n', last_eol)
+                if next_eol == -1: # No end of line here.
+                    buf = buf[last_eol:]
+                    break # keep the last fragment, read the next chunk
+                else:
+                    yield buf[last_eol:next_eol+1]
+                    last_eol = next_eol + 1
+                    if last_eol >= len(buf):
+                        buf = ''
+                        break
+            
+
+                
 
 def get_all_dosages():
     for chrfile in [x for x in sorted(os.listdir(DOSAGE_DIR)) if x.startswith(DOSAGE_PREFIX)]:
         print datetime.datetime.now(), "Processing %s"%chrfile
-        for line in gzip.open(os.path.join(DOSAGE_DIR, chrfile)):
+        for line in buffered_file(gzip.open(os.path.join(DOSAGE_DIR, chrfile))):
             arr = line.strip().split()
             rsid = arr[1]
             refallele = arr[4]
@@ -51,10 +81,22 @@ class WeightsDB:
 class GetApplicationsOf:
     def __init__(self):
         self.db = WeightsDB()
+        if PRELOAD_WEIGHTS:
+            print datetime.datetime.now(), "Preloading weights..."
+            self.tuples = defaultdict(list)
+            for tup in self.db.query("SELECT rsid, gene, weight, eff_allele FROM weights"):
+                self.tuples[tup[0]].append(tup[1:])
+        else:
+            self.tuples = None
 
     def __call__(self, rsid):
-        for tup in self.db.query("SELECT gene, weight, eff_allele FROM weights WHERE rsid=?", (rsid,)):
-            yield tup
+        if self.tuples:
+            for tup in self.tuples[rsid]:
+                yield tup
+        else:                
+            for tup in self.db.query("SELECT gene, weight, eff_allele FROM weights WHERE rsid=?", (rsid,)):
+                yield tup
+
 get_applications_of = GetApplicationsOf()
 
 class TranscriptionMatrix:
