@@ -31,5 +31,3 @@ https://github.com/hwheeler01/PrediXmod
 
 Please let me know if there is anything else you need.
 
-Thanks
-Haky
