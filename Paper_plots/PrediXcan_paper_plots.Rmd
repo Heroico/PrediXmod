@@ -1,0 +1,115 @@
+---
+title: "PrediXcan_paper_plots"
+author: "Heather E. Wheeler"
+date: "`r Sys.time()`"
+output: html_document
+---
+
+
+```{r,DGNtoGEU,fig.height=4,fig.width=4}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+qqR2 <- function(corvec,nn)
+{
+  set.seed(12345)
+## nn is the sample size, number of individuals used to compute correlation.
+## needs correlation vector as input.
+## nullcorvec generates a random sample from correlation distributions, under the null hypothesis of 0 correlation using Fisher's approximation.
+  mm <- length(corvec)
+  nullcorvec = tanh(rnorm(mm)/sqrt(nn-3)) ## null correlation vector
+  qqplot(nullcorvec^2,corvec^2, xlab=expression("Expected R"^"2"), ylab=expression("Observed R"^"2"),ylim=c(0,0.825),cex=0.5); abline(0,1); grid()
+}
+
+obs<-read.table('/Users/heather/Dropbox/PrediXcan/GEUVADIS/observed',header=T)
+rownames(obs)<-obs[,1]
+obs<-obs[,-1]
+pred<-read.table('/Users/heather/Dropbox/PrediXcan/GEUVADIS/DGN.WB.predicted.txt',skip=1)
+headpred<-scan('/Users/heather/Dropbox/PrediXcan/GEUVADIS/header.DGN.WB.predicted.txt','character')
+colnames(pred)<-headpred
+rownames(pred)<-pred[,1]
+pred<-pred[,-1]
+tpred<-as.data.frame(t(pred))
+
+commonIDs<-intersect(rownames(tpred),rownames(obs))
+newpred<-tpred[commonIDs,]
+
+genelist<-intersect(colnames(newpred),colnames(obs))
+
+resultsmat <- matrix(0,ncol=2,nrow=length(genelist))
+colnames(resultsmat) <- c('R2','p')
+rownames(resultsmat) <- genelist
+
+for(i in 1:length(genelist)){
+  gene<-genelist[i]
+  res<-cor.test(obs[,gene],newpred[,gene])
+  info<-c(res$estimate^2,res$p.value)
+  resultsmat[i,]<-info
+}
+
+finalres<-resultsmat[order(resultsmat[,1],decreasing=T),]
+write.table(finalres,file="train.DGN-WB_test.GEUVADIS_R2.txt",quote=F)
+
+p<-qqR2(sqrt(finalres[,1]),length(commonIDs))
+print(p)
+
+```
+
+```{r,PritchardtoGEU,fig.height=4,fig.width=4}
+pritch<-read.table('/Users/heather/Dropbox/PrediXcan/GEUVADIS/Pritchard/Geneexpsubset',header=T)
+geu<-read.table('/Users/heather/Dropbox/PrediXcan/GEUVADIS/Pritchard/GeuvadiswithPritchardgenes_individuals',header=T)
+
+genelist <- intersect(rownames(pritch),rownames(geu))
+resultsmat <- matrix(0,ncol=2,nrow=length(genelist))
+colnames(resultsmat) <- c('R2','p')
+rownames(resultsmat) <- genelist
+
+for(i in 1:length(genelist)){
+  gene<-genelist[i]
+  res<-cor.test(as.numeric(pritch[gene,]),as.numeric(geu[gene,]))
+  info<-c(res$estimate^2,res$p.value)
+  resultsmat[i,]<-info
+}
+
+finalres2<-resultsmat[order(resultsmat[,1],decreasing=T),]
+write.table(finalres2,file="compareExp.Pritchard_GEUVADIS_R2.txt",quote=F)
+
+p<-qqR2(sqrt(finalres2[,1]),dim(pritch)[2])
+print(p)
+
+tiff("Fig3.GEU.qqR2.tiff",width=960,height=480,res=125)
+par(mfcol=c(1,2))
+qqR2(sqrt(finalres[,1]),length(commonIDs))
+qqR2(sqrt(finalres2[,1]),dim(pritch)[2])
+dev.off()
+
+png("Fig3.GEU.qqR2.png",width=960,height=480,res=125)
+par(mfcol=c(1,2))
+qqR2(sqrt(finalres[,1]),length(commonIDs))
+qqR2(sqrt(finalres2[,1]),dim(pritch)[2])
+dev.off()
+```
+
+```{r,DGNtoGEUexamples,fig.height=4,fig.width=4}
+##top predictions
+head(finalres)
+obsexp <-obs %>% select(ERAP2,LDHC,RPS26,NUDT2) 
+obsexp <- gather(obsexp)
+
+predexp <- newpred %>% select(ERAP2,LDHC,RPS26,NUDT2)
+predexp <- gather(predexp)
+
+data <- cbind(obsexp,predexp)
+colnames(data) <- c("gene","Observed","key","Predicted")
+p<-ggplot(data,aes(x=Predicted,y=Observed)) +geom_point(cex=0.8)+facet_wrap(~gene,scales="free",ncol=2)+ geom_smooth(method = "lm")
+p1<-p + xlab("Predicted Expression") + ylab("Observed Expression") + theme_bw(20)
+print(p1)
+
+tiff("Fig4.DGNtoGEU.examples.tiff",width=960,height=960,res=125)
+print(p1)
+dev.off()
+
+png("Fig4.DGNtoGEU.examples.png",width=960,height=960,res=125)
+print(p1)
+dev.off()
+```
