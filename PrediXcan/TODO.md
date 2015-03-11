@@ -1,6 +1,6 @@
-- [ ] make arguments by name instead of positional, allowing missing arguments with default values
+- [x] make arguments by name instead of positional, allowing missing arguments with default values
 
-- [ ] make all available genes (in db) as genelist by default 
+- [x] make all available genes (in db) as genelist by default 
 
 - [ ] in generate_sqlite_dbs.py add other_allele column
 
