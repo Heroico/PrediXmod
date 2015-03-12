@@ -1,0 +1,1 @@
+- [ ] add table with gname, n.snps, R2 from the *Results.txt files
