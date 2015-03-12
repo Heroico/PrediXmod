@@ -7,9 +7,12 @@ output: html_document
 
 
 ```{r,DGNtoGEU,fig.height=4,fig.width=4}
+date <- Sys.Date()
+"%&%" = function(a,b) paste(a,b,sep="")
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(reshape2)
 qqR2 <- function(corvec,nn)
 {
   set.seed(12345)
@@ -51,9 +54,8 @@ finalres<-resultsmat[order(resultsmat[,1],decreasing=T),]
 write.table(finalres,file="train.DGN-WB_test.GEUVADIS_R2.txt",quote=F)
 
 p<-qqR2(sqrt(finalres[,1]),length(commonIDs))
-print(p)
-
 ```
+
 
 ```{r,PritchardtoGEU,fig.height=4,fig.width=4}
 pritch<-read.table('/Users/heather/Dropbox/PrediXcan/GEUVADIS/Pritchard/Geneexpsubset',header=T)
@@ -90,6 +92,50 @@ qqR2(sqrt(finalres2[,1]),dim(pritch)[2])
 dev.off()
 ```
 
+```{r, pred_v_rep}
+pred <- data.frame(finalres) %>% mutate(gene=rownames(finalres))
+
+repgene<-scan('/Users/heather/Dropbox/PrediXcan/GEUVADIS/Pritchard/Geneexpsubset.GENE.list', 'character')
+rep <- data.frame(resultsmat) %>% mutate(gene=repgene)
+
+all <- inner_join(pred,rep,by='gene')
+dim(all)
+
+p<-ggplot(all,aes(x=R2.x,y=R2.y)) +geom_point(cex=0.8) + geom_smooth(method = "lm")
+p1<-p + xlab(expression("PrediXcan R"^"2")) + ylab(expression("RNA-seq replication R"^"2")) + theme_bw(10) + coord_cartesian(xlim=c(0,0.85),ylim=c(0,0.85))
+print(p1)
+
+png("pred_v_rep_LCLs.png",width=480,height=480,res=125)
+print(p1)
+dev.off()
+
+##correlation b/t replication R2 and PrediXcan R2
+summary(lm(R2.y~R2.x,all))
+
+##plot sorted R2's
+sortpred<-sort(all$R2.x)
+sortrep<-sort(all$R2.y)
+sorted<-data.frame(cbind(sortpred,sortrep))
+p<-ggplot(sorted,aes(x=sortpred,y=sortrep)) +geom_point(cex=0.8) + geom_abline(intercept=0, slope=1,color='red')
+p1<-p + xlab(expression("sorted PrediXcan R"^"2")) + ylab(expression("sorted RNA-seq replication R"^"2")) + theme_bw(10) + coord_cartesian(xlim=c(0,0.85),ylim=c(0,0.85))
+print(p1)
+
+png("sorted_pred_v_rep_LCLs.png",width=480,height=480,res=125)
+print(p1)
+dev.off()
+
+forbp<-all %>% select(R2.x,R2.y)
+colnames(forbp) <- c("PrediXcan_Imputed","RNA_Replicate")
+forbp<-melt(forbp)
+p <- ggplot(forbp, aes(x = variable, y = value))
+p1 <- p + geom_boxplot() +  ylab(expression("R"^2)) + xlab("GEUVADIS comparison") + theme_bw(10)
+print(p1)
+
+png("boxplot_pred_v_rep_LCLs.png",width=480,height=720,res=125)
+print(p1)
+dev.off()
+```
+
 ```{r,DGNtoGEUexamples,fig.height=4,fig.width=4}
 ##top predictions
 head(finalres)
@@ -112,4 +158,46 @@ dev.off()
 png("Fig4.DGNtoGEU.examples.png",width=960,height=960,res=125)
 print(p1)
 dev.off()
+```
+
+```{r,dgn_to_gtex}
+qqR2 <- function(corvec,nn,tissue)
+{
+  set.seed(12345)
+## nn is the sample size, number of individuals used to compute correlation.
+## needs correlation vector as input.
+## nullcorvec generates a random sample from correlation distributions, under the null hypothesis of 0 correlation using Fisher's approximation.
+  mm <- length(corvec)
+  nullcorvec = tanh(rnorm(mm)/sqrt(nn-3)) ## null correlation vector
+  data<-data.frame(cbind(sort(corvec^2),sort(nullcorvec^2)))
+  data <- data %>% mutate(tissue=tissue)
+  colnames(data)<-c("obs","exp","tissue")
+  return(data)
+}
+
+tissueinfo<-read.table('/Users/heather/GitHub/PrediXmod/Paper_plots/GTEx_pilot_sample_sizes.txt')
+
+finalp<-data.frame()
+
+for(i in 1:dim(tissueinfo)[1]){
+  tis<-as.character(tissueinfo[i,1])
+  n<-tissueinfo[i,2]
+  resfile<-'/Users/heather/GitHub/PrediXmod/Paper_plots/train.DGN-WB_test.GTEX_' %&% tis %&% '_R2.txt'
+  finalres<-read.table(resfile,header=T)
+  p<-qqR2(sqrt(finalres[,1]),n,tis)
+  finalp<-rbind(finalp,p)
+}
+
+plot<-ggplot(finalp,aes(x=exp,y=obs))+geom_point(pch=1,cex=1.5)+facet_wrap(~tissue,scales="fixed",ncol=3)
+p2<- plot + geom_abline(intercept=0, slope=1) + xlab(expression("Expected R"^2)) + ylab(expression("Observed Predictive R"^2)) + theme_bw(20)
+p2
+
+tiff(file="DGN-EN_to_GTEx-pilot.tiff",height=720,width=720)
+p2
+dev.off()
+
+png(file="DGN-EN_to_GTEx-pilot.png",height=720,width=720)
+p2
+dev.off()
+
 ```
