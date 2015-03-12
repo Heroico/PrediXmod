@@ -1,0 +1,9 @@
+Adipose-Subcutaneous 115
+Artery-Tibial 122
+Heart-LeftVentricle 88
+Lung 126
+Muscle-Skeletal 143
+Nerve-Tibial 98
+Skin-SunExposed(Lowerleg) 114
+Thyroid 112
+WholeBlood 162

@@ -1,0 +1,65 @@
+---
+title: "compare DGN predictions hapmap2 v wtccc genotyped"
+author: "Heather E. Wheeler"
+date: "`r Sys.time()`"
+output: html_document
+---
+
+```{r}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+lassoHap<-read.table('/Users/heather/Dropbox/PrediXcan/DGN-CV/DGN-WB_exp_10-foldCV_elasticNet_alpha1_imputedSNPs_chr1-22_2015-02-02.txt',header=T)
+enHap<-read.table('/Users/heather/Dropbox/PrediXcan/DGN-CV/DGN-WB_exp_10-foldCV_elasticNet_alpha0.5_imputedSNPs_chr1-22_2015-02-02.txt',header=T)
+psHap<-read.table('/Users/heather/Dropbox/PrediXcan/DGN-CV/DGN-WB_exp_10-foldCV_polyscore_Pthresh0.001_imputedSNPs_chr1-22_2015-02-09.txt',header=T)
+
+lassoWT<-read.table('/Users/heather/Dropbox/PrediXcan/DGN-CV/DGN-WB_exp_10-foldCV_elasticNet_alpha1_wtcccGenotypedSNPs_chr1-22_2015-03-12.txt',header=T)
+enWT<-read.table('/Users/heather/Dropbox/PrediXcan/DGN-CV/DGN-WB_exp_10-foldCV_elasticNet_alpha0.5_wtcccGenotypedSNPs_chr1-22_2015-03-12.txt',header=T)
+
+lassoHap<-lassoHap[complete.cases(lassoHap),]
+lassoWT<-lassoWT[complete.cases(lassoWT),]
+enHap<-enHap[complete.cases(enHap),]
+enWT<-enWT[complete.cases(enWT),]
+psHap<-psHap[complete.cases(psHap),]
+dim(lassoHap)
+dim(lassoWT)
+dim(enHap)
+dim(enWT)
+dim(psHap)
+
+lasso<-inner_join(lassoHap,lassoWT,by='gene')
+dim(lasso)
+summary(lm(R2.y~R2.x,lasso))
+p<-ggplot(lasso,aes(x=R2.x,y=R2.y)) +geom_point(cex=0.8)+ geom_abline(intercept=0, slope=1,color='red') + ggtitle("DGN-WB Cross-Validation")
+p1<-p + xlab(expression("Hapmap2 SNPs LASSO R"^2)) + ylab(expression("WTCCC genotyped SNPs LASSO R"^2)) + theme_bw(20)
+print(p1)
+
+png(file="DGN-CV_LASSO.wtccc_v_hapmap.png")
+p1
+dev.off()
+
+en<-inner_join(enHap,enWT,by='gene')
+dim(en)
+summary(lm(R2.y~R2.x,en))
+p<-ggplot(en,aes(x=R2.x,y=R2.y)) +geom_point(cex=0.8)+ geom_abline(intercept=0, slope=1,color='red') + ggtitle("DGN-WB Cross-Validation")
+p1<-p + xlab(expression("Hapmap2 SNPs Elastic Net R"^2)) + ylab(expression("WTCCC genotyped SNPs Elastic Net R"^2)) + theme_bw(20)
+print(p1)
+
+png(file="DGN-CV_ENalpha0.5.wtccc_v_hapmap.png")
+p1
+dev.off()
+
+ps<-inner_join(psHap,enWT,by='gene')
+dim(ps)
+summary(lm(CV.R2~R2,ps))
+p<-ggplot(ps,aes(x=CV.R2,y=R2)) +geom_point(cex=0.8)+ geom_abline(intercept=0, slope=1,color='red') + ggtitle("DGN-WB Cross-Validation")
+p1<-p + xlab(expression("Hapmap2 SNPs Polyscore (p<1e-04) R"^2)) + ylab(expression("WTCCC genotyped SNPs Elastic Net R"^2)) + theme_bw(20)
+print(p1)
+
+png(file="DGN-CV_ENalpha0.5.wtccc_v_Polyscore1e-4hapmap.png")
+p1
+dev.off()
+
+```
+
