@@ -15,6 +15,8 @@ ct.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/cis.v.trans.predi
 gt.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-imputation/DGN-imputed-for-PrediXcan/"
 en.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-calc-weights/DGN-WB_weights/"
 
+#snpset <- "hapmapSnpsCEU"
+snpset <- "wtcccGenotypedSNPs"
 k <- 10 ### k-fold CV
 tis <- "DGN-WB"  
 chrom <- as.numeric(args[1]) 
@@ -55,18 +57,18 @@ t.expdata <- t.expdata[,intersect(colnames(t.expdata),rownames(gencode))] ###pul
                 
 expsamplelist <- rownames(t.expdata) ###samples with exp data###
 
-bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.chr" %&% chrom %&% ".bim" ###get SNP position information###
+bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8." %&% snpset %&% ".chr" %&% chrom %&% ".bim" ###get SNP position information###
 bim <- read.table(bimfile)
 rownames(bim) <- bim$V2
                 
-famfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.ID.list" ###samples with imputed gt data###
+famfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8." %&% snpset %&% ".ID.list" ###samples with imputed gt data###
 fam <- scan(famfile,"character")
 samplelist <- intersect(fam,expsamplelist)
                         
 exp.w.geno <- t.expdata[samplelist,] ###get expression of samples with genotypes###
 explist <- colnames(exp.w.geno)
 
-gtfile <- gt.dir %&% 'DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.chr' %&% chrom %&% '.SNPxID'
+gtfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8." %&% snpset %&% ".chr" %&% chrom %&% ".SNPxID"
 gtX <- scan(gtfile)
 gtX <- matrix(gtX, ncol = length(fam), byrow=TRUE)
 colnames(gtX) <- fam
@@ -79,14 +81,14 @@ resultsarray <- array(0,c(length(explist),8))
 dimnames(resultsarray)[[1]] <- explist
 resultscol <- c("gene","alpha","cvm","lambda.iteration","lambda.min","n.snps","R2","pval")
 dimnames(resultsarray)[[2]] <- resultscol
-workingbest <- "working_" %&% tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% "_imputedSNPs_chr" %&% chrom %&% "_" %&% date %&% ".txt"
+workingbest <- "working_" %&% tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% "_" %&% snpset %&% "_chr" %&% chrom %&% "_" %&% date %&% ".txt"
 write(resultscol,file=workingbest,ncolumns=8,sep="\t")
 
 weightcol = c("gene","SNP","refAllele","effectAllele","beta")
-workingweight <- en.dir %&% tis %&% "_elasticNet_alpha" %&% alpha %&% "_weights_chr" %&% chrom %&% "_" %&% date %&% ".txt"
+workingweight <- en.dir %&% tis %&% "_elasticNet_alpha" %&% alpha %&% "_" %&% snpset %&% "_weights_chr" %&% chrom %&% "_" %&% date %&% ".txt"
 write(weightcol,file=workingweight,ncol=5,sep="\t")
 
-#set.seed(1001) ##forgot to include in 2/2/15 run, should I re-run?
+set.seed(1001) ##forgot to include in 2/2/15 run, should I re-run?
 
 for(i in 1:length(explist)){
   cat(i,"/",length(explist),"\n")
@@ -160,4 +162,4 @@ for(i in 1:length(explist)){
 }
 
 
-write.table(resultsarray,file=tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% "_imputedSNPs_chr" %&% chrom %&% "_" %&% date %&% ".txt",quote=F,row.names=F,sep="\t")
+write.table(resultsarray,file=tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% "_" %&% snpset %&% "_chr" %&% chrom %&% "_" %&% date %&% ".txt",quote=F,row.names=F,sep="\t")
