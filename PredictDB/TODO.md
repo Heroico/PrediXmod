@@ -1,1 +1,1 @@
-- [ ] add table with gname, n.snps, R2 from the *Results.txt files
+- [ ] add table with gname, n.snps, R2 from the *Results.txt files. This data will be added to the output of the PrediXcan association results. So that we know which genes we can be more confident about.
