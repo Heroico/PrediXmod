@@ -20,7 +20,7 @@ Input:
 	- source: DGN (default)
 	- model: Elastic Net 0.50 (default)
 
-download [this](https://github.com/hakyimlab/PrediXmod/blob/master/PrediXcan/predict_gene_expression.py "Prediction Script") python script to compute predicted expression levels.
+download [this](https://github.com/hakyimlab/PrediXmod/blob/master/PrediXcan/predict_gene_expression.py "Prediction Script") python script to compute predicted expression levels. Python 2.7 is needed.
 
 The cross validated performance measures for each gene will be added to the db. (- [ ] TODO)
 
