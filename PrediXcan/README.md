@@ -20,7 +20,7 @@ Input:
 	- source: DGN (default)
 	- model: Elastic Net 0.50 (default)
 
-download [this](https://github.com/hakyimlab/PrediXmod/blob/master/PrediXcan/predict_gene_expression.py "Prediction Script") python script to compute predicted expression levels.
+download [this](https://github.com/hakyimlab/PrediXmod/blob/master/PrediXcan/predict_gene_expression.py "Prediction Script") python script to compute predicted expression levels. Python 2.7 is needed.
 
 The cross validated performance measures for each gene will be added to the db. (- [ ] TODO)
 
@@ -28,9 +28,7 @@ The script predict\_gene\_expression.py predicts gene expression levels using pr
 
 For now the association with phenotype needs to be performed manually. We are currently working on an R package that will do both the prediction of expression levels and the association with the phenotype.
 
-All the scripts used to develop the prediction models can be found here:
-
-https://github.com/hwheeler01/PrediXmod
+All the scripts used to develop the prediction models can be found [here](https://github.com/hwheeler01/PrediXmod "Prediction Model Pipeline")
 
 
 Supported operating systems:
