@@ -66,7 +66,7 @@ p<-qqR2(sqrt(finalres[,1]),length(commonIDs))
 
 ```{r,geuvadis_h2_to_OoS_R2}
 source('multiplot.R')
-geuR2<-read.table('/Users/heather/GitHub/PrediXmod/Paper_plots/train.DGN-WB_test.GEUVADIS_R2.txt',header=T)
+geuR2<-read.table('/Users/heather/GitHub/PrediXmod/Paper_plots/train.DGN-WB_test.GEUVADIS_R2.txt',header=T) #elastic-net alpha=0.5
 geuh2<-read.table('/Users/heather/Dropbox/PrediXcan/GEUVADIS/GEUVADIS.EUR.localGRM.h2.exp.2014-08-13.txt',header=T)
 
 geuR2<-geuR2 %>% mutate(gene=rownames(geuR2))
@@ -77,6 +77,19 @@ all<-all %>% mutate(ymin = pmax(0, h2 - 2 * se), ymax = pmin(1, h2 + 2 * se)) %>
 h2plot<-ggplot(all,aes(x=1:nrow(all),y=h2,ymin=ymin, ymax=ymax) ) + geom_pointrange(col='gray')+geom_point()+coord_cartesian(ylim=c(-0.05,0.85))
 h2plot<- h2plot + geom_point(data=all,aes(x=1:nrow(all),y=R2),color='green',cex=1) + xlab(expression("Genes sorted by h"^2)) + ylab(expression(h^{2} ~"(black) or " ~ R^{2} ~ "(green)")) +theme_bw(30)
 h2plot
+
+##calc %genes with R2 that reaches lower bound of h2 estimate
+count<-all$R2>all$ymin
+table(count)
+sum(table(count))
+table(count)/sum(table(count))
+
+##calc %genes with R2 that reaches lower bound of h2 estimate, only include genes with h2>0.1
+topdata<-all %>% filter(h2>0.1)
+count<-topdata$R2>topdata$ymin
+table(count)
+sum(table(count))
+table(count)/sum(table(count))
 
 qqR2plot<-ggplot(p,aes(x=exp,y=obs))+geom_point(pch=1,cex=1.5)+coord_cartesian(ylim=c(-0.05,0.85))
 qqR2plot<- qqR2plot + geom_abline(intercept=0, slope=1) + xlab(expression("Expected R"^2)) + ylab(expression("Observed Predictive R"^2)) + theme_bw(30)
@@ -117,14 +130,14 @@ p<-qqR2(sqrt(finalres2[,1]),dim(pritch)[2])
 
 tiff("Fig3.GEU.qqR2.tiff",width=960,height=480,res=125)
 par(mfcol=c(1,2))
-qqR2(sqrt(finalres[,1]),length(commonIDs))
-qqR2(sqrt(finalres2[,1]),dim(pritch)[2])
+a<-qqR2(sqrt(finalres[,1]),length(commonIDs))
+a<-qqR2(sqrt(finalres2[,1]),dim(pritch)[2])
 dev.off()
 
 png("Fig3.GEU.qqR2.png",width=960,height=480,res=125)
 par(mfcol=c(1,2))
-qqR2(sqrt(finalres[,1]),length(commonIDs))
-qqR2(sqrt(finalres2[,1]),dim(pritch)[2])
+a<-qqR2(sqrt(finalres[,1]),length(commonIDs))
+a<-qqR2(sqrt(finalres2[,1]),dim(pritch)[2])
 dev.off()
 ```
 
@@ -172,13 +185,26 @@ print(p1)
 dev.off()
 ```
 
-```{r,DGNtoGEUexamples,fig.height=4,fig.width=4}
+```{r,DGNtoGEUexamples}
 ##top predictions
-head(finalres)
-obsexp <-obs %>% select(ERAP2,LDHC,RPS26,NUDT2) 
+finalres[1:20,]
+obsexp <-obs %>% select(ERAP2,LDHC,RPS26,NUDT2,PEX6,ZNF266,C17orf97,FAM118A,MXRA7,ERAP1,ATP6AP1L,ARHGEF19,B4GALNT3,SLC25A41,HEATR6,NT5C3L,ACCS,DNAJB7,WBSCR27,FAHD1) 
 obsexp <- gather(obsexp)
 
-predexp <- newpred %>% select(ERAP2,LDHC,RPS26,NUDT2)
+predexp <- newpred %>% select(ERAP2,LDHC,RPS26,NUDT2,PEX6,ZNF266,C17orf97,FAM118A,MXRA7,ERAP1,ATP6AP1L,ARHGEF19,B4GALNT3,SLC25A41,HEATR6,NT5C3L,ACCS,DNAJB7,WBSCR27,FAHD1)
+predexp <- gather(predexp)
+
+data <- cbind(obsexp,predexp)
+colnames(data) <- c("gene","Observed","key","Predicted")
+p<-ggplot(data,aes(x=Predicted,y=Observed)) +geom_point(cex=0.8)+facet_wrap(~gene,scales="free",ncol=4)+ geom_smooth(method = "lm")
+p1<-p + xlab("Predicted Expression") + ylab("Observed Expression") + theme_bw()
+print(p1)
+
+##pick 4 representative for paper
+obsexp <-obs %>% select(ERAP2,NUDT2,PEX6,ERAP1) 
+obsexp <- gather(obsexp)
+
+predexp <- newpred %>% select(ERAP2,NUDT2,PEX6,ERAP1)
 predexp <- gather(predexp)
 
 data <- cbind(obsexp,predexp)

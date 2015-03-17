@@ -261,4 +261,46 @@ tiff(filename="compareR2_h2_lasso_poly_top.tiff",width=720,height=960)
 print(p1)
 dev.off()
 p1
+
+##calc %genes with R2 that reaches lower bound of h2 estimate
+###LASSO
+count<-dataL$R2>dataL$ymin
+table(count)
+sum(table(count))
+table(count)/sum(table(count))
+
+###Polyscore
+count<-dataP$R2>dataP$ymin
+table(count)
+sum(table(count))
+table(count)/sum(table(count))
+
+###TopSNP
+count<-dataT$R2>dataT$ymin
+table(count)
+sum(table(count))
+table(count)/sum(table(count))
+
+##calc %genes with R2 that reaches lower bound of h2 estimate, only include genes with h2>0.1
+###LASSO
+topdataL<-dataL %>% filter(h2>0.1)
+count<-topdataL$R2>topdataL$ymin
+table(count)
+sum(table(count))
+table(count)/sum(table(count))
+
+###Polyscore
+topdataP<-dataP %>% filter(h2>0.1)
+count<-topdataP$R2>topdataP$ymin
+table(count)
+sum(table(count))
+table(count)/sum(table(count))
+
+###TopSNP
+topdataT<-dataT %>% filter(h2>0.1)
+count<-topdataT$R2>topdataT$ymin
+table(count)
+sum(table(count))
+table(count)/sum(table(count))
+
 ```
