@@ -27,6 +27,12 @@ done
 
 ##use sftp to upload *vcf.gz files to https://imputationserver.sph.umich.edu/start.html#!pages/run, see 'vcf.filelist.for.sftp' for paths
 ##started QC run for all chromosomes, expecting strand flip errors
+##Options selected in GUI: 
+	## Reference Panel:1000G 1 v3 Shapeit2 (no singletons)
+	## Phasing: SHAPEIT
+	## Population: EUR
+	## Mode: Quality Control Only
+
 ##download statistics.txt file from Imputationserver and renamed 'statistics.DGN.chr1-22.txt' to get errors
 ##To fix strand flips:
 
@@ -40,6 +46,7 @@ do
 done
 
 ##use sftp to upload *strand.switches.vcf.gz files to https://imputationserver.sph.umich.edu/start.html#!pages/run, see 'vcf.filelist.for.sftp' for paths 
+## Use same options as above expect Mode: Quality Control and Imputation
 ##save output in /group/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-imputation/UMich-imputation-results/
 
 ##to get results:
