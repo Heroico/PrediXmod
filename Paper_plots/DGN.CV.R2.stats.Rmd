@@ -1,0 +1,32 @@
+---
+title: "DGN.CV.R2.stats"
+author: "Heather E. Wheeler"
+date: "`r Sys.time()`"
+output: html_document
+---
+
+
+```{r}
+date <- Sys.Date()
+"%&%" = function(a,b) paste(a,b,sep="")
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(reshape2)
+my.dir <- '/Volumes/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-calc-weights/'
+cv<-read.table(my.dir %&% 'DGN-WB_exp_10-foldCV_elasticNet_alpha0.5_imputedSNPs_chr1-22_2015-02-02.txt',header=T)
+cv0<-filter(cv,R2>0)
+n0<-dim(cv0)[1]
+p0<-n0/n0*100
+cv0.01<-filter(cv,R2>0.01)
+n0.01<-dim(cv0.01)[1]
+p0.01<-round(n0.01/n0*100,2)
+cv0.10<-filter(cv,R2>0.10)
+n0.10<-dim(cv0.10)[1]
+p0.10<-round(n0.10/n0*100,2)
+
+print('# genes R2 > 0: ' %&% n0 %&% ', Percent: ' %&% p0 %&% '%')
+print('# genes R2 > 0.01: ' %&% n0.01 %&% ', Percent: ' %&% p0.01 %&% '%')
+print('# genes R2 > 0.10: ' %&% n0.10 %&% ', Percent: ' %&% p0.10 %&% '%')
+```
+

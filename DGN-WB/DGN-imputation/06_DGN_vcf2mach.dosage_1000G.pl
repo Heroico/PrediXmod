@@ -3,7 +3,7 @@
 use warnings;
 use List::Util qw[min max];
 
-####This perl script takes the DGN imputed vcf files (MAF>0.05) as input, removes ambiguous-strand SNPs (A/T and C/G), removes non-HapMap2 SNPs,
+####This perl script takes the DGN imputed vcf files (MAF>0.05) as input, removes ambiguous-strand SNPs (A/T and C/G),
 #### removes SNPs with R2<0.8, finds the rsID for each SNP, and makes several output files for each autosome for future parallel computing:
 #### .mlinfo.gz and .mldose.gz MACH files for GCTA
 #### .SNPxID matrix for quick scanning into R
@@ -15,27 +15,17 @@ use List::Util qw[min max];
 my $dir = "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-imputation/UMich-imputation-results/results/";
 my $refdir = "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/cis.v.trans.prediction/DGN-WB_genotypes/";
 
-
-open(HAP, "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/hapmapSnpsCEU.list"); ##from http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/hapmapSnpsCEU.txt.gz
-
-my %hapmapsnps;
-while(<HAP>){
-    chomp;
-    my ($snp) = split(/\n/);
-    $hapmapsnps{$snp} = 1;
-}
-
 #parse by chr
 for(my $i = 1; $i <= 22; $i++){
     print "$i\n";
     my $snpxidhandle = "SNPxID" . $i;
     my $mlinfohandle = "MLINFO" . $i;
     my $bimhandle = "BIM" . $i;
-    open($snpxidhandle, ">DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.chr${i}.SNPxID");
-    open($bimhandle, ">DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.chr${i}.bim");
-    open($mlinfohandle, ">DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.chr${i}.mlinfo");
-    open(ID, ">DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.ID.list");
-    open(SNP, ">DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.chr${i}.SNP.list");
+    open($snpxidhandle, ">DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.chr${i}.SNPxID");
+    open($bimhandle, ">DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.chr${i}.bim");
+    open($mlinfohandle, ">DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.chr${i}.mlinfo");
+    open(ID, ">DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.ID.list");
+    open(SNP, ">DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.chr${i}.SNP.list");
 
     open(REF, "${refdir}ALL.chr${i}.SHAPEIT2_integrated_phase1_v3.20101123.snps_indels_svs.all.noSingleton.RECORDS");
 
@@ -78,7 +68,7 @@ for(my $i = 1; $i <= 22; $i++){
 	    next;
 	}elsif($ref eq "G" && $alt eq "C"){
 	    next;
-	}elsif(defined($hapmapsnps{$rs}) && $rsq >= 0.8 && $pos =~ m/\d+/){ ###only pull hapmap SNPs with R2>0.8 & don't print header rows
+	}elsif($rsq >= 0.8 && $pos =~ m/\d+/){ ###only pull SNPs with R2>0.8 & don't print header rows
 	    my $snpxidhandle = "SNPxID" . $chr;		
 	    my $bimhandle = "BIM" . $chr;
 	    my $mlinfohandle = "MLINFO" . $chr;
@@ -106,18 +96,21 @@ for(my $i = 1; $i <= 22; $i++){
 for(my $i = 1; $i <= 22; $i++){
     print "$i\n";
     open(R, ">runR.R") or die "cant mae runR.R\n";
-    print R "dat<-scan(\"DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.chr${i}.SNPxID\")\n";
-    print R "gtidlist<-scan(\"DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.ID.list\",\"character\")\n";
+    print R "bim<-read.table(\"DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.chr${i}.bim\")\n";
+    print R "saveRDS(bim,\"DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.chr${i}.bim.rds\")\n";
+    print R "dat<-scan(\"DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.chr${i}.SNPxID\")\n";
+    print R "saveRDS(dat,\"DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.chr${i}.SNPxID.rds\")\n";
+    print R "gtidlist<-scan(\"DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.ID.list\",\"character\")\n";
     print R "dat<-matrix(dat, ncol=length(gtidlist), byrow=T)\n";
     print R "dat<-t(dat)\n";
 
     print R "write.table(dat,\"t.dos.chr${i}\",col.names=F,row.names=F,quote=F)\n";
     close(R);
     system("R --vanilla < runR.R");
-    system("paste -d\' \' intro t.dos.chr${i} > DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8.hapmapSnpsCEU.chr${i}.mldose");
+    system("paste -d\' \' intro t.dos.chr${i} > DGN-imputed-for-PrediXcan/DGN.imputed_maf0.05_R20.8_1000G.chr${i}.mldose");
 }
 
 system("gzip DGN-imputed-for-PrediXcan/*.mldose");
 system("gzip DGN-imputed-for-PrediXcan/*.mlinfo");
-system("rm intro t.dos.chr* runR.R");
+system("rm intro t.dos.chr* runR.R 1000G.chr*.SNPxID");
 
