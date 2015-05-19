@@ -66,3 +66,6 @@ do
 done
 ##plot R2 "Estimated Imputation Accuracy" and ER2 (concordance) "Empirical (Leave-One-Out) R-square (available only for genotyped variants)"
 R --vanilla < plot_impute_R2_ER2.r
+
+
+### moved UMich-imputation-results/ and DGN-imputed-for-PrediXcan/ to /group/im-lab/nas40t2/Data/Transcriptome/WB1K/imputed/ on 20150519
