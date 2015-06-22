@@ -3,10 +3,25 @@
 SOURCE_DIR = 'GTEx-model-results'
 TARGET_DIR = 'generated_dbs'
 
+import gzip
 import os
 import sys
 import sqlite3
 
+def smart_open(source_file):
+    if source_file.endswith('.txt'):
+        return open(source_file)
+    elif source_file.endswith('.gz'):
+        return gzip.open(source_file)
+    else:
+        print "error: source file names should end in .txt or .gz; %s doesn't comply. exiting."%source_file
+        sys.exit(1)
+
+def smart_list(source_dir, including):
+    source_files = [ x for x in os.listdir(source_dir) if including in x]
+    if len(source_files) == 0:
+        print "warning: no recognized source files (i.e., including %s) on %s"%(including, source_dir)
+    return sorted(source_files)        
 
 def generate_weights_file():
 
@@ -20,7 +35,7 @@ def generate_weights_file():
                     pass
             return x
         header = None            
-        for k, line in enumerate(open(source_file)):
+        for k, line in enumerate(smart_open(source_file)):
             if header is None:
                 header = line.strip().split()
             else:                
@@ -28,9 +43,8 @@ def generate_weights_file():
 
     def source_files(source_dir=SOURCE_DIR):
         "List all relevant source files"
-        for x in sorted(os.listdir(source_dir)):
-            if x.endswith('.allBetas.txt'):
-                yield os.path.join(source_dir, x)
+        for x in smart_list(source_dir, including='.allBetas.'):
+            yield os.path.join(source_dir, x)
 
     class DB:
         "This encapsulates a single SQLite DB (for a given source file and alpha)."
@@ -102,7 +116,7 @@ def add_extra_data():
             return x
 
         header = "gene    ensid   mean.cvm        var.cvm lambda.var      lambda.frac.diff        mean.lambda.iteration   lambda.min      n.snps  R2      alpha   pval".split()
-        for k, line in enumerate(open(source_file)):
+        for k, line in enumerate(smart_open(source_file)):
             if line.strip() and 'mean.lambda.iteration' not in line: # some files, but not all, have a header
                 ret = dict(zip(header, map(upconvert, line.strip().split())))
                 if 'alpha' in ret:
@@ -110,9 +124,8 @@ def add_extra_data():
     
     def source_files(source_dir=SOURCE_DIR):
         "List all relevant source files"
-        for x in sorted(os.listdir(source_dir)):
-            if x.endswith('.allResults.txt'):
-                yield os.path.join(source_dir, x)
+        for x in smart_list(source_dir, including='.allResults.txt'):
+            yield os.path.join(source_dir, x)
 
     class DB:
         "This encapsulates a single SQLite DB (for a given source file and alpha)."
