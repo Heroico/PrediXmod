@@ -59,8 +59,10 @@ t.expdata <- t.expdata[,intersect(colnames(t.expdata),rownames(gencode))] ###pul
                 
 expsamplelist <- rownames(t.expdata) ###samples with exp data###
 
-bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim" ###get SNP position information###
-bim <- read.table(bimfile)
+#bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim" ###get SNP position information###
+#bim <- read.table(bimfile)
+bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim.rds" ###get SNP position information###
+bim <- readRDS(bimfile)
 rownames(bim) <- bim$V2
                 
 famfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".ID.list" ###samples with imputed gt data###
