@@ -61,6 +61,7 @@ def generate_weights_file():
             
             self("CREATE TABLE weights (rsid TEXT, gene TEXT, weight DOUBLE, eff_allele CHARACTER, pval DOUBLE, N INTEGER, cis INTEGER)")
             self("CREATE INDEX weights_rsid ON weights (rsid)")
+            self("CREATE INDEX weights_gene ON weights (gene)")
             self("CREATE INDEX weights_rsid_gene ON weights (rsid, gene)")
 
 
