@@ -45,7 +45,7 @@ class Iterator:
 
 def calculate_variance(outfile, chrnumber, a):
     var = np.var(a.hap)
-    outfile.write('chr%s\t%s\t%s\n'%(chrnumber, a.id, corr))
+    outfile.write('chr%s\t%s\t%s\n'%(chrnumber, a.id, var))
 
     
 
@@ -59,6 +59,14 @@ for chrlegend in sorted(x for x in os.listdir(DIR) if '.legend.' in x):
         if nxt is None:
             break
         calculate_variance(variances_file, itr.chrnumber, nxt)
-
 variances_file.close()
-    
+
+
+with open('load.sql', 'w+') as outfile:
+    outfile.write('CREATE TABLE variances (chr TEXT, rsid TEXT, variance real);\n')
+    outfile.write('CREATE INDEX variances_index ON variances (rsid);\n')
+    outfile.write('.separator "\\t"\n')
+    outfile.write('.import variances.txt variances\n')
+os.system('sqlite3 variances.db < load.sql')
+
+print "Remember to uncomment the first part after checking that this worked."
