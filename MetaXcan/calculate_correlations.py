@@ -57,15 +57,13 @@ def calculate_correlations(outfile, chrnumber, a, b):
 
     
 
-correlations_file = gzip.open('correlations.txt.gz', 'w+')
+correlations_file = open('correlations.txt', 'w+')
 for chrlegend in sorted(x for x in os.listdir(DIR) if '.legend.' in x):
     print "%s Processing %s..."%(datetime.datetime.now(), chrlegend)
     itr = DoubleIterator(chrlegend)
     window = []
-    
     # Main cycle
     while True:
-
         # Fill the window
         while True:
             nxt = itr.next_SNP()
@@ -76,18 +74,25 @@ for chrlegend in sorted(x for x in os.listdir(DIR) if '.legend.' in x):
                     window.append(nxt)
             else:
                 itr.rewind() ; break
-
         #print "%s window size = %d"%(datetime.datetime.now(), len(window))
         # Calculate all correlations between the leftmost SNP and the rest of the window
         if len(window) > 1:
             for idx in range(1, len(window)):
                 calculate_correlations(correlations_file, itr.chrnumber, window[0], window[idx])
-
         # Remove the leftmost SNP from the window
         del window[0]
         gc.collect() # This could be done much less often, but it doesn't seem to add much to runtime.
         if len(window) == 0:
             break
-
 correlations_file.close()
-    
+ 
+
+
+with open('load.sql', 'w+') as outfile:
+    outfile.write('CREATE TABLE correlations (chr TEXT, rsid_a TEXT, rsid_b, correlation real);\n')
+    outfile.write('CREATE INDEX correlations_index ON correlations (rsid_a, rsid_b);\n')
+    outfile.write('.separator "\\t"\n')
+    outfile.write('.import correlations.txt correlations\n')
+os.system('rm -f correlations.db ; sqlite3 correlations.db < load.sql')
+
+print "Un-comment the first part once you checked this worked."
