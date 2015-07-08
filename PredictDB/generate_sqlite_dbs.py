@@ -59,7 +59,7 @@ def generate_weights_file():
 
             self.connection = sqlite3.connect(db_filename)
             
-            self("CREATE TABLE weights (rsid TEXT, gene TEXT, weight DOUBLE, eff_allele CHARACTER, pval DOUBLE, N INTEGER, cis INTEGER)")
+            self("CREATE TABLE weights (rsid TEXT, gene TEXT, weight DOUBLE, ref_allele CHARACTER, eff_allele CHARACTER, pval DOUBLE, N INTEGER, cis INTEGER)")
             self("CREATE INDEX weights_rsid ON weights (rsid)")
             self("CREATE INDEX weights_gene ON weights (gene)")
             self("CREATE INDEX weights_rsid_gene ON weights (rsid, gene)")
@@ -76,7 +76,7 @@ def generate_weights_file():
             self.connection.commit()            
 
         def insert_row(self, row):
-            self("INSERT INTO weights VALUES(?, ?, ?, ?, NULL, NULL, NULL)", (row['rsid'], row['gene'], row['beta'], row['alt']))
+            self("INSERT INTO weights VALUES(?, ?, ?, ?, ?, NULL, NULL, NULL)", (row['rsid'], row['gene'], row['beta'], row['ref'],row['alt']))
             "alt allele is the dosage/effect allele in GTEx data"
             
     class MetaDB:
@@ -116,12 +116,18 @@ def add_extra_data():
                     pass
             return x
 
-        header = "gene    ensid   mean.cvm        var.cvm lambda.var      lambda.frac.diff        mean.lambda.iteration   lambda.min      n.snps  R2      alpha   pval".split()
+        header = None
         for k, line in enumerate(smart_open(source_file)):
-            if line.strip() and 'mean.lambda.iteration' not in line: # some files, but not all, have a header
-                ret = dict(zip(header, map(upconvert, line.strip().split())))
-                if 'alpha' in ret:
-                    yield ret
+            if header is None:
+                if 'gene' not in line: ## this is then not a header
+                    header = "gene    ensid   mean.cvm        var.cvm lambda.var      lambda.frac.diff        mean.lambda.iteration   lambda.min      n.snps  R2      alpha   pval".split()
+                else:
+                    header = line.strip().split()
+            else:
+                if line.strip(): ###and 'gene' not in line: # some files, but not all, have a header
+                    ret = dict(zip(header, map(upconvert, line.strip().split())))
+                    if 'alpha' in ret:
+                        yield ret
     
     def source_files(source_dir=SOURCE_DIR):
         "List all relevant source files"
@@ -133,6 +139,7 @@ def add_extra_data():
         def __init__(self, source_file, alpha, target_dir=TARGET_DIR):
             tissue_name = os.path.basename(source_file).split('.')[0]
             db_filename = os.path.join(target_dir, '%s_%s.db'%(tissue_name, alpha))
+            print(db_filename) ## delete after debug finished
             assert(os.path.exists(db_filename))
             self.connection = sqlite3.connect(db_filename)
             
