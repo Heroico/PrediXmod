@@ -15,7 +15,7 @@ parser.add_argument('--genelist', action="store", dest="genelist", default=None,
 parser.add_argument('--dosages', action="store", dest="dosages", default="data/dosages", help="Path to a directory of gzipped dosage files.")
 parser.add_argument('--dosages_prefix', dest="dosages_prefix", default="chr", action="store", help="Prefix of filenames of gzipped dosage files.")
 parser.add_argument('--dosages_buffer', dest="dosages_buffer", default=None, action="store", help="Buffer size in GB for each dosage file (default: read line by line)")
-parser.add_argument('--weights', action="store", dest="weights",default="data/DGN-WB_0.5.db",  help="SQLite database with rsid weights.")
+parser.add_argument('--weights', action="store", dest="weights",default="data/weights.db",  help="SQLite database with rsid weights.")
 parser.add_argument('--weights_on_disk', action="store_true", dest="weights_on_disk",  help="Don't load weights db to memory.")
 parser.add_argument('--output', action="store", dest="output", default="output.txt", help="Path to the output file.")
 parser.add_argument('--rsid_column', action="store", dest="rsid_column", default="rsid", help="name of column with ids in the databases.")
