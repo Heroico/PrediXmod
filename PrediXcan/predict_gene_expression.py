@@ -8,6 +8,7 @@ import numpy as np
 import os
 import sqlite3
 import sys
+import project_utils
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--genelist', action="store", dest="genelist", default=None, help="Text file with chromosome, gene pairs.")
@@ -17,6 +18,7 @@ parser.add_argument('--dosages_buffer', dest="dosages_buffer", default=None, act
 parser.add_argument('--weights', action="store", dest="weights",default="data/weights.db",  help="SQLite database with rsid weights.")
 parser.add_argument('--weights_on_disk', action="store_true", dest="weights_on_disk",  help="Don't load weights db to memory.")
 parser.add_argument('--output', action="store", dest="output", default="output.txt", help="Path to the output file.")
+parser.add_argument('--rsid_column', action="store", dest="rsid_column", default="rsid", help="name of column with ids in the databases.")
 args = parser.parse_args()
 
  
@@ -28,6 +30,9 @@ BETA_FILE = args.weights
 PRELOAD_WEIGHTS = not args.weights_on_disk
 OUTPUT_FILE = args.output
 
+import re
+ID_COLUMN_NAME = re.sub(r'\W+', '', args.rsid_column)
+print args.rsid_column
 
 def buffered_file(file):
     if not DOSAGE_BUFFER:
@@ -67,6 +72,7 @@ def get_all_dosages():
 
 class WeightsDB:
     def __init__(self):
+        print BETA_FILE
         self.conn = sqlite3.connect(BETA_FILE)
 
     def query(self, sql, args=None):
@@ -84,7 +90,7 @@ class GetApplicationsOf:
         if PRELOAD_WEIGHTS:
             print datetime.datetime.now(), "Preloading weights..."
             self.tuples = defaultdict(list)
-            for tup in self.db.query("SELECT rsid, gene, weight, eff_allele FROM weights"):
+            for tup in self.db.query("SELECT " + ID_COLUMN_NAME +", gene, weight, eff_allele FROM weights"):
                 self.tuples[tup[0]].append(tup[1:])
         else:
             self.tuples = None
@@ -94,7 +100,7 @@ class GetApplicationsOf:
             for tup in self.tuples[rsid]:
                 yield tup
         else:                
-            for tup in self.db.query("SELECT gene, weight, eff_allele FROM weights WHERE rsid=?", (rsid,)):
+            for tup in self.db.query("SELECT gene, weight, eff_allele FROM weights WHERE " + ID_COLUMN_NAME + "=?", (rsid,)):
                 yield tup
 
 get_applications_of = GetApplicationsOf()
@@ -119,6 +125,7 @@ class TranscriptionMatrix:
             self.D[self.gene_index[gene],] += dosage_row * weight * multiplier # Update all cases for that gene
 
     def save(self):
+        project_utils.ensure_file_path(OUTPUT_FILE)
         with open(OUTPUT_FILE, 'w+') as outfile:
             outfile.write('\t'.join(self.gene_list) + '\n') # Nb. this lists the names of rows, not of columns
             for col in range(0, self.D.shape[1]):
