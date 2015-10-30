@@ -12,12 +12,13 @@ pre <- ""
 
 my.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/"
 ct.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/cis.v.trans.prediction/"
-gt.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-imputation/DGN-imputed-for-PrediXcan/"
+#gt.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-imputation/DGN-imputed-for-PrediXcan/"
+gt.dir <- "/group/im-lab/nas40t2/Data/Transcriptome/WB1K/imputed/DGN-imputed-for-PrediXcan/"
 en.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-calc-weights/DGN-WB_weights/"
 
-#snpset <- ".hapmapSnpsCEU" ##2015-02-02 results
+snpset <- ".hapmapSnpsCEU" ##2015-02-02 results
 #snpset <- ".wtcccGenotypedSNPs" ##2015-03-12 results
-snpset <- "_1000G"
+#snpset <- "_1000G"
 
 k <- 10 ### k-fold CV
 tis <- "DGN-WB"  
@@ -59,10 +60,10 @@ t.expdata <- t.expdata[,intersect(colnames(t.expdata),rownames(gencode))] ###pul
                 
 expsamplelist <- rownames(t.expdata) ###samples with exp data###
 
-#bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim" ###get SNP position information###
-#bim <- read.table(bimfile)
-bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim.rds" ###get SNP position information###
-bim <- readRDS(bimfile)
+bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim" ###get SNP position information###
+bim <- read.table(bimfile)
+#for 1000G: bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim.rds" ###get SNP position information###
+#for 1000G: bim <- readRDS(bimfile)
 rownames(bim) <- bim$V2
                 
 famfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".ID.list" ###samples with imputed gt data###
@@ -72,10 +73,10 @@ samplelist <- intersect(fam,expsamplelist)
 exp.w.geno <- t.expdata[samplelist,] ###get expression of samples with genotypes###
 explist <- colnames(exp.w.geno)
 
-#gtfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".SNPxID"
-#gtX <- scan(gtfile)
-gtfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".SNPxID.rds" #smaller file format, faster readin
-gtX <-readRDS(gtfile)
+gtfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".SNPxID"
+gtX <- scan(gtfile)
+#gtfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".SNPxID.rds" #smaller file format, faster readin
+#gtX <-readRDS(gtfile)
 gtX <- matrix(gtX, ncol = length(fam), byrow=TRUE)
 colnames(gtX) <- fam
 rownames(gtX) <- bim$V2
