@@ -1,8 +1,8 @@
 ####by Heather E. Wheeler 20150202####
 ##see runscripts/run_01_imputedDGN-WB_CV_elasticNet_chr*sh and qsub.txt for tarbell job submission scripts
 date <- Sys.Date()
-args <- commandArgs(trailingOnly=T)
-#args <- c('22','1')
+#args <- commandArgs(trailingOnly=T)
+args <- c('22','1')
 "%&%" = function(a,b) paste(a,b,sep="")
 
 ###############################################
@@ -88,14 +88,14 @@ resultsarray <- array(0,c(length(explist),8))
 dimnames(resultsarray)[[1]] <- explist
 resultscol <- c("gene","alpha","cvm","lambda.iteration","lambda.min","n.snps","R2","pval")
 dimnames(resultsarray)[[2]] <- resultscol
-workingbest <- "working_" %&% tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% "_" %&% snpset %&% "_chr" %&% chrom %&% "_" %&% date %&% ".txt"
+workingbest <- "working_" %&% tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% snpset %&% "_chr" %&% chrom %&% "_" %&% date %&% ".txt"
 write(resultscol,file=workingbest,ncolumns=8,sep="\t")
 
 weightcol = c("gene","SNP","refAllele","effectAllele","beta")
-workingweight <- en.dir %&% tis %&% "_elasticNet_alpha" %&% alpha %&% "_" %&% snpset %&% "_weights_chr" %&% chrom %&% "_" %&% date %&% ".txt"
+workingweight <- en.dir %&% tis %&% "_elasticNet_alpha" %&% alpha %&% snpset %&% "_weights_chr" %&% chrom %&% "_" %&% date %&% ".txt"
 write(weightcol,file=workingweight,ncol=5,sep="\t")
 
-set.seed(1001) ##forgot to include in 2/2/15 run, should I re-run?
+set.seed(1001) 
 
 for(i in 1:length(explist)){
   cat(i,"/",length(explist),"\n")
@@ -153,9 +153,14 @@ for(i in 1:length(explist)){
 
     
     ### output best shrunken betas for PrediXcan
+    ### adjust betas by dividing by the genotype sd, so don't have to scale genotypes in PrediXcan
     bestbetalist <- names(bestbetas)
+    bestgenos <- X[,intersect(colnames(X),bestbetalist)] ### pull best-SNP genotypes
+    sigma = apply(bestgenos,2,sd)
+    sigadjweights = bestbetas/sigma
+
     bestbetainfo <- bim[bestbetalist,]
-    betatable<-as.matrix(cbind(bestbetainfo,bestbetas))
+    betatable<-as.matrix(cbind(bestbetainfo,sigadjweights))
     betafile<-cbind(genename,betatable[,2],betatable[,5],betatable[,6],betatable[,7]) ##output "gene","SNP","refAllele","effectAllele","beta"
     write(t(betafile),file=workingweight,ncolumns=5,append=T,sep="\t") # t() necessary for correct output from write() function
 
@@ -169,4 +174,4 @@ for(i in 1:length(explist)){
 }
 
 
-write.table(resultsarray,file=tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% "_" %&% snpset %&% "_chr" %&% chrom %&% "_" %&% date %&% ".txt",quote=F,row.names=F,sep="\t")
+write.table(resultsarray,file=tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% snpset %&% "_chr" %&% chrom %&% "_" %&% date %&% ".txt",quote=F,row.names=F,sep="\t")
