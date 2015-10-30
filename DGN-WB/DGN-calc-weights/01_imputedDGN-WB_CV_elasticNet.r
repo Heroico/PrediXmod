@@ -1,8 +1,8 @@
 ####by Heather E. Wheeler 20150202####
 ##see runscripts/run_01_imputedDGN-WB_CV_elasticNet_chr*sh and qsub.txt for tarbell job submission scripts
 date <- Sys.Date()
-#args <- commandArgs(trailingOnly=T)
-args <- c('22','1')
+args <- commandArgs(trailingOnly=T)
+#args <- c('22','1')
 "%&%" = function(a,b) paste(a,b,sep="")
 
 ###############################################
@@ -92,7 +92,7 @@ workingbest <- "working_" %&% tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alph
 write(resultscol,file=workingbest,ncolumns=8,sep="\t")
 
 weightcol = c("gene","SNP","refAllele","effectAllele","beta")
-workingweight <- en.dir %&% tis %&% "_elasticNet_alpha" %&% alpha %&% snpset %&% "_weights_chr" %&% chrom %&% "_" %&% date %&% ".txt"
+workingweight <- en.dir %&% tis %&% "_elasticNet_alpha" %&% alpha %&% snpset %&% "_unscaled_weights_chr" %&% chrom %&% "_" %&% date %&% ".txt"
 write(weightcol,file=workingweight,ncol=5,sep="\t")
 
 set.seed(1001) 
@@ -155,7 +155,7 @@ for(i in 1:length(explist)){
     ### output best shrunken betas for PrediXcan
     ### adjust betas by dividing by the genotype sd, so don't have to scale genotypes in PrediXcan
     bestbetalist <- names(bestbetas)
-    bestgenos <- X[,intersect(colnames(X),bestbetalist)] ### pull best-SNP genotypes
+    bestgenos <- X[,intersect(colnames(X),bestbetalist),drop=FALSE] ### pull best-SNP genotypes
     sigma = apply(bestgenos,2,sd)
     sigadjweights = bestbetas/sigma
 
