@@ -1,0 +1,40 @@
+---
+title: "compare_scaled_unscaled"
+author: "Heather Wheeler"
+date: "November 3, 2015"
+output: html_document
+---
+
+
+
+```{r,fig.width=5,fig.height=5}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+"%&%" = function(a,b) paste(a,b,sep="")
+my.dir <- "/Volumes/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-calc-weights/DGN-WB_weights/"
+unscaled <- read.table(my.dir %&% "DGN-WB_elasticNet_alpha0.05.hapmapSnpsCEU_unscaled_weights_chr10_2015-11-01.txt",header=TRUE)
+scaled <- read.table(my.dir %&% "weights_by_chr/DGN-WB_elasticNet_alpha0.05_.hapmapSnpsCEU_weights_chr10_2015-08-21.txt",header=TRUE)
+dim(unscaled)
+dim(scaled)
+head(unscaled)
+head(scaled)
+tail(unscaled)
+tail(scaled)
+merged <- mutate(unscaled,scaledBeta=scaled[,5],unscaledBeta=beta)
+ggplot(merged,aes(x=unscaledBeta,y=scaledBeta))+geom_point()+geom_abline()+coord_cartesian(xlim=c(-0.8,0.8),ylim=c(-0.8,0.8))+ggtitle("DGN chr10 alpha=0.05")
+cor.test(merged$unscaledBeta,merged$scaledBeta)
+
+unscaled <- read.table(my.dir %&% "DGN-WB_elasticNet_alpha0.95.hapmapSnpsCEU_unscaled_weights_chr10_2015-11-01.txt",header=TRUE)
+scaled <- read.table(my.dir %&% "weights_by_chr/DGN-WB_elasticNet_alpha0.95_.hapmapSnpsCEU_weights_chr10_2015-08-21.txt",header=TRUE)
+dim(unscaled)
+dim(scaled)
+head(unscaled)
+head(scaled)
+tail(unscaled)
+tail(scaled)
+merged <- mutate(unscaled,scaledBeta=scaled[,5],unscaledBeta=beta)
+ggplot(merged,aes(x=unscaledBeta,y=scaledBeta))+geom_point()+geom_abline()+coord_cartesian(xlim=c(-2,2),ylim=c(-2,2))+ggtitle("DGN chr10 alpha=0.95")
+cor.test(merged$unscaledBeta,merged$scaledBeta)
+```
+
