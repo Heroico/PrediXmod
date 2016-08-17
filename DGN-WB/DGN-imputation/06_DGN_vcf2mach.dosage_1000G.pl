@@ -68,7 +68,7 @@ for(my $i = 1; $i <= 22; $i++){
 	    next;
 	}elsif($ref eq "G" && $alt eq "C"){
 	    next;
-	}elsif($rsq >= 0.8 && $pos =~ m/\d+/){ ###only pull SNPs with R2>0.8 & don't print header rows
+	}elsif($rs =~ m/rs\d+/ && $rsq >= 0.8 && $pos =~ m/\d+/){ ###only pull SNPs with rsIDs & R2>0.8 & don't print header rows
 	    my $snpxidhandle = "SNPxID" . $chr;		
 	    my $bimhandle = "BIM" . $chr;
 	    my $mlinfohandle = "MLINFO" . $chr;
@@ -112,5 +112,5 @@ for(my $i = 1; $i <= 22; $i++){
 
 system("gzip DGN-imputed-for-PrediXcan/*.mldose");
 system("gzip DGN-imputed-for-PrediXcan/*.mlinfo");
-system("rm intro t.dos.chr* runR.R 1000G.chr*.SNPxID");
+system("rm intro t.dos.chr* runR.R DGN-imputed-for-PrediXcan/*1000G.chr*.SNPxID");
 

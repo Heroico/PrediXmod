@@ -12,12 +12,13 @@ pre <- ""
 
 my.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/"
 ct.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/cis.v.trans.prediction/"
-gt.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-imputation/DGN-imputed-for-PrediXcan/"
+#gt.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-imputation/DGN-imputed-for-PrediXcan/"
+gt.dir <- "/group/im-lab/nas40t2/Data/Transcriptome/WB1K/imputed/DGN-imputed-for-PrediXcan/"
 en.dir <- pre %&% "/group/im-lab/nas40t2/hwheeler/PrediXcan_CV/GTEx_2014-06013_release/transfers/PrediXmod/DGN-WB/DGN-calc-weights/DGN-WB_weights/"
 
-#snpset <- ".hapmapSnpsCEU" ##2015-02-02 results
+snpset <- ".hapmapSnpsCEU" ##2015-02-02 results
 #snpset <- ".wtcccGenotypedSNPs" ##2015-03-12 results
-snpset <- "_1000G"
+#snpset <- "_1000G"
 
 k <- 10 ### k-fold CV
 tis <- "DGN-WB"  
@@ -59,10 +60,10 @@ t.expdata <- t.expdata[,intersect(colnames(t.expdata),rownames(gencode))] ###pul
                 
 expsamplelist <- rownames(t.expdata) ###samples with exp data###
 
-#bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim" ###get SNP position information###
-#bim <- read.table(bimfile)
-bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim.rds" ###get SNP position information###
-bim <- readRDS(bimfile)
+bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim" ###get SNP position information###
+bim <- read.table(bimfile)
+#for 1000G: bimfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".bim.rds" ###get SNP position information###
+#for 1000G: bim <- readRDS(bimfile)
 rownames(bim) <- bim$V2
                 
 famfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".ID.list" ###samples with imputed gt data###
@@ -72,10 +73,10 @@ samplelist <- intersect(fam,expsamplelist)
 exp.w.geno <- t.expdata[samplelist,] ###get expression of samples with genotypes###
 explist <- colnames(exp.w.geno)
 
-#gtfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".SNPxID"
-#gtX <- scan(gtfile)
-gtfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".SNPxID.rds" #smaller file format, faster readin
-gtX <-readRDS(gtfile)
+gtfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".SNPxID"
+gtX <- scan(gtfile)
+#gtfile <- gt.dir %&% "DGN.imputed_maf0.05_R20.8" %&% snpset %&% ".chr" %&% chrom %&% ".SNPxID.rds" #smaller file format, faster readin
+#gtX <-readRDS(gtfile)
 gtX <- matrix(gtX, ncol = length(fam), byrow=TRUE)
 colnames(gtX) <- fam
 rownames(gtX) <- bim$V2
@@ -87,14 +88,14 @@ resultsarray <- array(0,c(length(explist),8))
 dimnames(resultsarray)[[1]] <- explist
 resultscol <- c("gene","alpha","cvm","lambda.iteration","lambda.min","n.snps","R2","pval")
 dimnames(resultsarray)[[2]] <- resultscol
-workingbest <- "working_" %&% tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% "_" %&% snpset %&% "_chr" %&% chrom %&% "_" %&% date %&% ".txt"
+workingbest <- "working_" %&% tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% snpset %&% "_chr" %&% chrom %&% "_" %&% date %&% ".txt"
 write(resultscol,file=workingbest,ncolumns=8,sep="\t")
 
 weightcol = c("gene","SNP","refAllele","effectAllele","beta")
-workingweight <- en.dir %&% tis %&% "_elasticNet_alpha" %&% alpha %&% "_" %&% snpset %&% "_weights_chr" %&% chrom %&% "_" %&% date %&% ".txt"
+workingweight <- en.dir %&% tis %&% "_elasticNet_alpha" %&% alpha %&% snpset %&% "_unscaled_weights_chr" %&% chrom %&% "_" %&% date %&% ".txt"
 write(weightcol,file=workingweight,ncol=5,sep="\t")
 
-set.seed(1001) ##forgot to include in 2/2/15 run, should I re-run?
+set.seed(1001) 
 
 for(i in 1:length(explist)){
   cat(i,"/",length(explist),"\n")
@@ -152,9 +153,14 @@ for(i in 1:length(explist)){
 
     
     ### output best shrunken betas for PrediXcan
+    ### adjust betas by dividing by the genotype sd, so don't have to scale genotypes in PrediXcan
     bestbetalist <- names(bestbetas)
+    bestgenos <- X[,intersect(colnames(X),bestbetalist),drop=FALSE] ### pull best-SNP genotypes
+    sigma = apply(bestgenos,2,sd)
+    sigadjweights = bestbetas/sigma
+
     bestbetainfo <- bim[bestbetalist,]
-    betatable<-as.matrix(cbind(bestbetainfo,bestbetas))
+    betatable<-as.matrix(cbind(bestbetainfo,sigadjweights))
     betafile<-cbind(genename,betatable[,2],betatable[,5],betatable[,6],betatable[,7]) ##output "gene","SNP","refAllele","effectAllele","beta"
     write(t(betafile),file=workingweight,ncolumns=5,append=T,sep="\t") # t() necessary for correct output from write() function
 
@@ -168,4 +174,4 @@ for(i in 1:length(explist)){
 }
 
 
-write.table(resultsarray,file=tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% "_" %&% snpset %&% "_chr" %&% chrom %&% "_" %&% date %&% ".txt",quote=F,row.names=F,sep="\t")
+write.table(resultsarray,file=tis %&% "_exp_" %&% k %&% "-foldCV_elasticNet_alpha" %&% alpha %&% snpset %&% "_chr" %&% chrom %&% "_" %&% date %&% ".txt",quote=F,row.names=F,sep="\t")

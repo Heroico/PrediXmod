@@ -51,7 +51,7 @@ and the result will be saved in *results/expression.txt*
 
 ### Transcriptome models
 
-You can download sqlite database models from [here](https://app.box.com/s/5nejbvzgsis77wtrxt8xokyn7pcdgnnp)
+You can download sqlite database models from [here](https://s3.amazonaws.com/imlab-open/Data/PredictDB/DGN-WB_0.5.db)
 
 ### Dosage data
 
